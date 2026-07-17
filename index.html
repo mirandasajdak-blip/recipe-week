@@ -6,7 +6,7 @@
 <title>Our Recipe Week</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root { --bg:#faf6ee; --card-bg:#fff; --line:#e5dec9; --ink:#2b261f; --ink-soft:#70675b; --mustard:#f1ebd9; --danger:#b03a2e; --primary:#8a6f44; --primary-hover:#735c36; }
+:root { --bg:#f4f7f2; --card-bg:#fff; --line:#dde4d7; --ink:#252b25; --ink-soft:#66705f; --mustard:#e7ede0; --danger:#b03a2e; --primary:#5b7a5f; --primary-hover:#48624c; }
 body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; padding:20px; line-height:1.5; }
 #dd-root { max-width:1000px; margin:0 auto; }
 .dd-header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:1px solid var(--line); padding-bottom:16px; margin-bottom:16px; flex-wrap:wrap; gap:16px; }
@@ -34,7 +34,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
 .dd-tag { background:var(--mustard); padding:2px 6px; border-radius:4px; color:var(--ink); }
 .dd-badge-try { background:#f5eccd; color:#614d0b; }
 .dd-badge-warn { background:#f9dcd9; color:#611b15; }
-.dd-badge-leftover { background:#dfeee0; color:#2f5233; }
+.dd-badge-leftover { background:#f3e2d9; color:#8a4a34; }
 .ingr-preview { font-size:13px; color:var(--ink-soft); border-top:1px solid var(--line); padding-top:8px; }
 .dd-empty { text-align:center; padding:40px; color:var(--ink-soft); border:1px dashed var(--line); border-radius:8px; grid-column:1/-1; }
 .dd-empty .display { font-size:18px; color:var(--ink); margin-bottom:8px; }
@@ -338,7 +338,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
           <div class="dd-tab ${state.tab==='baking'?'active':''}" data-tab="baking">Baking Box</div>
           <div class="dd-tab ${state.tab==='week'?'active':''}" data-tab="week">This Week</div>
           <div class="dd-tab ${state.tab==='grocery'?'active':''}" data-tab="grocery">Grocery List</div>
-          <div class="dd-tab" id="dd-shopping-mode-btn" style="background:#2f5233;color:#fff;border-color:#2f5233;">🛒 Shopping Mode</div>
+          <div class="dd-tab" id="dd-shopping-mode-btn" style="background:#8a4a34;color:#fff;border-color:#8a4a34;">🛒 Shopping Mode</div>
         </div>
       </div>
       <div style="margin:-10px 0 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -364,7 +364,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
       <div class="dd-toolbar">
         <input class="dd-search" id="dd-search-input" placeholder="Search by name, ingredient, or cuisine…" value="${esc(state.search)}"/>
         <button class="dd-btn" id="dd-add-recipe">+ Add recipe</button>
-        ${state.recipes.some(r=>r.bucket==='tryList' && r.surpriseEligible===false) ? `<button class="dd-btn secondary" id="dd-fix-surprise" style="color:#2f5233;border-color:#2f5233;">Enable surprises for all Want-to-try</button>` : ''}
+        ${state.recipes.some(r=>r.bucket==='tryList' && r.surpriseEligible===false) ? `<button class="dd-btn secondary" id="dd-fix-surprise" style="color:#8a4a34;border-color:#8a4a34;">Enable surprises for all Want-to-try</button>` : ''}
       </div>
       <div class="dd-toolbar">
         <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -931,7 +931,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
       const isPairEnd = r.makesLeftovers && state.thisWeek[i-1] === id;
       return `
         <div class="dd-slot filled">
-          <div class="num">Slot ${i+1} · ${esc(r.protein)}${isTry?' · <span style="color:#614d0b;background:#f5eccd;padding:1px 4px;border-radius:3px;">want to try</span>':''}${(isPairStart||isPairEnd)?' · <span style="color:#2f5233;background:#dfeee0;padding:1px 4px;border-radius:3px;">leftovers</span>':''}</div>
+          <div class="num">Slot ${i+1} · ${esc(r.protein)}${isTry?' · <span style="color:#614d0b;background:#f5eccd;padding:1px 4px;border-radius:3px;">want to try</span>':''}${(isPairStart||isPairEnd)?' · <span style="color:#8a4a34;background:#f3e2d9;padding:1px 4px;border-radius:3px;">leftovers</span>':''}</div>
           <h4>${esc(r.name)}</h4>
           <div class="meta">${r.cuisine?esc(r.cuisine)+' · ':''}${r.servings||'–'} servings${noIngr?' · <span style="color:var(--danger);">needs ingredients</span>':''}</div>
           <div class="dd-slot-actions">
