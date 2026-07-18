@@ -1076,7 +1076,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
   function openBakingFillPicker(weekBody){
     const back = document.createElement('div');
     back.className = 'dd-modal-back';
-    const options = state.recipes.filter(r => r.kind==='baking' && !state.bakingWeek.includes(r.id));
+    const options = state.recipes.filter(r => r.kind==='baking' && !state.bakingWeek.includes(r.id)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     back.innerHTML = `
       <div class="dd-modal">
         <button class="dd-close">&times;</button>
@@ -1100,7 +1100,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
   function openFillPicker(slotIdx, weekBody){
     const back = document.createElement('div');
     back.className = 'dd-modal-back';
-    const options = state.recipes.filter(r => r.kind==='dinner' && !state.thisWeek.includes(r.id));
+    const options = state.recipes.filter(r => r.kind==='dinner' && !state.thisWeek.includes(r.id)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     back.innerHTML = `
       <div class="dd-modal">
         <button class="dd-close">&times;</button>
@@ -1136,7 +1136,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
     const currentId = state.thisWeek[slotIdx];
     const back = document.createElement('div');
     back.className = 'dd-modal-back';
-    const options = state.recipes.filter(r => r.kind==='dinner' && (!state.thisWeek.includes(r.id) || r.id === currentId));
+    const options = state.recipes.filter(r => r.kind==='dinner' && (!state.thisWeek.includes(r.id) || r.id === currentId)).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     back.innerHTML = `
       <div class="dd-modal">
         <button class="dd-close">&times;</button>
