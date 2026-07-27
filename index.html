@@ -203,14 +203,44 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
     return r;
   }
 
+  let writeQueue = Promise.resolve();
+  function enqueueWrite(fn){
+    const result = writeQueue.then(fn);
+    writeQueue = result.catch(() => {});
+    return result;
+  }
+
+  function showSaveError(detail){
+    let banner = document.getElementById('dd-save-error-banner');
+    if(!banner){
+      banner = document.createElement('div');
+      banner.id = 'dd-save-error-banner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:2000;background:#7A2020;color:#fff;padding:10px 16px;font-size:13px;text-align:center;';
+      document.body.prepend(banner);
+    }
+    banner.textContent = `⚠ Couldn't save your last change (${detail}). Check your connection — this change may not have been kept.`;
+    banner.style.display = 'block';
+  }
+
+  function clearSaveError(){
+    const banner = document.getElementById('dd-save-error-banner');
+    if(banner) banner.style.display = 'none';
+  }
+
   async function saveRecipeRow(recipe){
-    const { error } = await supabase.from('recipes').upsert({ id: recipe.id, data: recipe, updated_at: new Date().toISOString() });
-    if(error) console.error("Failed to save recipe:", error);
-    return !error;
+    return enqueueWrite(async () => {
+      const { error } = await supabase.from('recipes').upsert({ id: recipe.id, data: recipe, updated_at: new Date().toISOString() });
+      if(error){ console.error("Failed to save recipe:", error); showSaveError(error.message || 'recipe save'); }
+      else clearSaveError();
+      return !error;
+    });
   }
   async function deleteRecipeRow(id){
-    const { error } = await supabase.from('recipes').delete().eq('id', id);
-    if(error) console.error("Failed to delete recipe:", error);
+    return enqueueWrite(async () => {
+      const { error } = await supabase.from('recipes').delete().eq('id', id);
+      if(error){ console.error("Failed to delete recipe:", error); showSaveError(error.message || 'recipe delete'); }
+      else clearSaveError();
+    });
   }
   async function saveMeta(){
     const payload = {
@@ -219,8 +249,11 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
       staples: state.staples, staples_active: state.staplesActive, tap_opens_view: state.tapOpensView,
       updated_at: new Date().toISOString()
     };
-    const { error } = await supabase.from('app_meta').upsert(payload);
-    if(error) console.error("Failed to save meta:", error);
+    return enqueueWrite(async () => {
+      const { error } = await supabase.from('app_meta').upsert(payload);
+      if(error){ console.error("Failed to save meta:", error); showSaveError(error.message || 'week/grocery save'); }
+      else clearSaveError();
+    });
   }
 
   async function loadState(){
