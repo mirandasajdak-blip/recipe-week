@@ -1,0 +1,22 @@
+name: Keep Supabase Awake (Recipe Week)
+
+on:
+  schedule:
+    - cron: '0 12 */3 * *'   # every 3 days at 12:00 UTC
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://eumvqctbimjejpudybwl.supabase.co/rest/v1/recipes?select=id&limit=1" \
+            -H "apikey: sb_publishable_o54xPBw4I40d4ii8xoNTQQ_vrYXLCI0" \
+            -H "Authorization: Bearer sb_publishable_o54xPBw4I40d4ii8xoNTQQ_vrYXLCI0")
+          echo "Supabase responded with HTTP $response"
+          if [ "$response" -ge 400 ]; then
+            echo "::error::Keep-alive ping failed with status $response"
+            exit 1
+          fi
