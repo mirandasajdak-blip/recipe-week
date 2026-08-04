@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Our Recipe Week</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root { --bg:#e8edf4; --card-bg:#fff; --line:#c7d2e0; --ink:#1a2130; --ink-soft:#5a6478; --mustard:#dbe3ee; --danger:#b03a2e; --primary:#2c4869; --primary-hover:#223a56; }
 body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; padding:20px; line-height:1.5; }
@@ -116,11 +115,20 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
 </head>
 <body>
 <div id="dd-root"></div>
-<script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getFirestore, collection, doc, getDoc, getDocs, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 (function(){
-  const SUPABASE_URL = "https://eumvqctbimjejpudybwl.supabase.co";
-  const SUPABASE_ANON_KEY = "sb_publishable_o54xPBw4I40d4ii8xoNTQQ_vrYXLCI0";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const firebaseConfig = {
+    apiKey: "AIzaSyDcjnv5O2vcN5nZNHruZSrEkcMED_Ho2ic",
+    authDomain: "recipe-week.firebaseapp.com",
+    projectId: "recipe-week",
+    storageBucket: "recipe-week.firebasestorage.app",
+    messagingSenderId: "468938759592",
+    appId: "1:468938759592:web:6a716fa43b761f726b919d"
+  };
+  const firebaseApp = initializeApp(firebaseConfig);
+  const db = getFirestore(firebaseApp);
 
   const CATS = ["Produce","Meat","Dairy & Eggs","Grains & Bread","Pantry & Canned","Spices & Condiments","Beverages & Broths","Frozen","Other"];
   const PROTEINS = ["Chicken","Beef","Pork","Turkey","Vegetarian","Other"];
@@ -229,55 +237,65 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
 
   async function saveRecipeRow(recipe){
     return enqueueWrite(async () => {
-      const { error } = await supabase.from('recipes').upsert({ id: recipe.id, data: recipe, updated_at: new Date().toISOString() });
-      if(error){ console.error("Failed to save recipe:", error); showSaveError(error.message || 'recipe save'); }
-      else clearSaveError();
-      return !error;
+      try {
+        await setDoc(doc(db, 'recipes', recipe.id), { data: recipe, updated_at: new Date().toISOString() });
+        clearSaveError();
+        return true;
+      } catch(error){
+        console.error("Failed to save recipe:", error);
+        showSaveError(error.message || 'recipe save');
+        return false;
+      }
     });
   }
   async function deleteRecipeRow(id){
     return enqueueWrite(async () => {
-      const { error } = await supabase.from('recipes').delete().eq('id', id);
-      if(error){ console.error("Failed to delete recipe:", error); showSaveError(error.message || 'recipe delete'); }
-      else clearSaveError();
+      try {
+        await deleteDoc(doc(db, 'recipes', id));
+        clearSaveError();
+      } catch(error){
+        console.error("Failed to delete recipe:", error);
+        showSaveError(error.message || 'recipe delete');
+      }
     });
   }
   async function saveMeta(){
     const payload = {
-      id: 1, this_week: state.thisWeek, baking_week: state.bakingWeek, checked_grocery: state.checkedGrocery,
+      this_week: state.thisWeek, baking_week: state.bakingWeek, checked_grocery: state.checkedGrocery,
       extra_grocery: state.extraGrocery, try_chance: state.tryChance, week_size: state.weekSize,
       staples: state.staples, staples_active: state.staplesActive, tap_opens_view: state.tapOpensView,
       updated_at: new Date().toISOString()
     };
     return enqueueWrite(async () => {
-      const { error } = await supabase.from('app_meta').upsert(payload);
-      if(error){ console.error("Failed to save meta:", error); showSaveError(error.message || 'week/grocery save'); }
-      else clearSaveError();
+      try {
+        await setDoc(doc(db, 'app_meta', 'main'), payload);
+        clearSaveError();
+      } catch(error){
+        console.error("Failed to save meta:", error);
+        showSaveError(error.message || 'week/grocery save');
+      }
     });
   }
 
   async function loadState(){
     state.loadError = false; state.loadErrorDetail = null; state.loadErrorCode = null;
     try {
-      const { data: recipeRows, error: recErr } = await supabase.from('recipes').select('id, data');
-      if(recErr) throw recErr;
-      if(!recipeRows || recipeRows.length === 0){
+      const recipesSnap = await getDocs(collection(db, 'recipes'));
+      if(recipesSnap.empty){
         const seeded = freshSeed();
-        if(seeded.length){
-          const rows = seeded.map(r => ({ id: r.id, data: r }));
-          const { error: insErr } = await supabase.from('recipes').insert(rows);
-          if(insErr) throw insErr;
+        for(const r of seeded){
+          await setDoc(doc(db, 'recipes', r.id), { data: r, updated_at: new Date().toISOString() });
         }
         state.recipes = seeded;
       } else {
-        state.recipes = recipeRows.map(row => repairRecipe(row.data));
+        state.recipes = recipesSnap.docs.map(d => repairRecipe(d.data().data));
       }
-      const { data: metaRow, error: metaErr } = await supabase.from('app_meta').select('*').eq('id', 1).maybeSingle();
-      if(metaErr) throw metaErr;
-      if(!metaRow){
+      const metaSnap = await getDoc(doc(db, 'app_meta', 'main'));
+      if(!metaSnap.exists()){
         state.thisWeek = []; state.bakingWeek = []; state.checkedGrocery = {}; state.extraGrocery = []; state.tryChance = 1; state.weekSize = 5;
         await saveMeta();
       } else {
+        const metaRow = metaSnap.data();
         state.thisWeek = metaRow.this_week || [];
         state.bakingWeek = metaRow.baking_week || [];
         state.checkedGrocery = metaRow.checked_grocery || {};
@@ -291,7 +309,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
     } catch(err){
       console.error("Database loading failed:", err);
       state.loadError = true;
-      state.loadErrorDetail = (err && (err.message || err.error_description || err.hint || err.details)) || JSON.stringify(err) || String(err);
+      state.loadErrorDetail = (err && err.message) || JSON.stringify(err) || String(err);
       state.loadErrorCode = err && err.code ? err.code : null;
     }
     state.loaded = true;
@@ -360,7 +378,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
       root.innerHTML = `
         <div class="dd-header"><div><h1>Dinner Rotation</h1></div></div>
         <div style="padding:16px;background:#FBEAEA;border:1px solid #E3A9A9;border-radius:8px;color:#7A2020;font-size:14px;line-height:1.6;">
-          <strong>Couldn't load your saved database.</strong> Please check your Supabase credentials or internet connection.
+          <strong>Couldn't load your saved database.</strong> Please check your Firebase credentials or internet connection.
           ${state.loadErrorDetail ? `<div style="margin-top:8px;font-family:monospace;font-size:12px;background:#fff;border:1px solid #E3A9A9;border-radius:4px;padding:8px;word-break:break-word;">${state.loadErrorCode ? '<strong>code:</strong> ' + esc(state.loadErrorCode) + '<br>' : ''}<strong>message:</strong> ${esc(state.loadErrorDetail)}</div>` : ''}
           <div style="margin-top:10px;"><button class="dd-btn" id="dd-retry-load">Retry</button></div>
         </div>
@@ -384,7 +402,7 @@ body { background-color:var(--bg); color:var(--ink); font-family:-apple-system,B
         </div>
       </div>
       <div style="margin:-10px 0 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <div class="dd-shared-note">Saved instantly to your shared Supabase database.</div>
+        <div class="dd-shared-note">Saved instantly to your shared Firebase database.</div>
         <button class="dd-btn secondary" id="dd-refresh" style="padding:5px 10px;font-size:11.5px;">Refresh</button>
       </div>
       <div id="dd-body"></div>
